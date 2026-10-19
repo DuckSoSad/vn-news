@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum Role {
+  User
+  Admin
+}
+
+model User {
+  id           String    @id @default(cuid())
+  role         Role      @default(User)
+  email        String    @unique
+  name         String
+  username     String    @unique
+  password     String
+  refreshToken String?   @db.Text
+  tokenVersion Int       @default(0)
+  posts        Post[]
+  comments     Comment[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Post {
+  id         String    @id @default(cuid())
+  title      String
+  slug       String    
+  content    String    @db.Text
+  published  Boolean   @default(false)
+  author     User      @relation(fields: [authorId], references: [id])
+  authorId   String
+  category   Category? @relation(fields: [categoryId], references: [id])
+  categoryId String?
+  tags       Tag[]
+  comments   Comment[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@unique([authorId, slug])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id    String @id @default(cuid())
+  name  String @unique
+  posts Post[]
+}
+
+model Tag {
+  id    String @id @default(cuid())
+  name  String @unique
+  posts Post[]
+}
